@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交我通 - 智能学习辅助平台</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3B82F6;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .file-drop-zone {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-drop-zone.drag-over {
+            border-color: #3B82F6;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .file-item {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+        .file-item:hover {
+            background-color: #f1f5f9;
+        }
+        .file-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+        }
+        .pdf-icon { background-color: #fee2e2; color: #ef4444; }
+        .ppt-icon { background-color: #fef3c7; color: #f59e0b; }
+        .doc-icon { background-color: #dbeafe; color: #3b82f6; }
+        .zip-icon { background-color: #ede9fe; color: #8b5cf6; }
+        .remove-btn {
+            transition: all 0.2s ease;
+        }
+        .remove-btn:hover {
+            transform: scale(1.1);
+        }
+        .pdf-preview {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .preview-header {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .preview-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .preview-day {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .preview-day:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 bg-white glass-effect shadow-md z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <span class="text-xl font-bold text-blue-500">交我通</span>
+                </div>
+                
+                <!-- 导航链接 -->
+                <div class="hidden md:flex md:items-center md:space-x-8">
+                    <a href="simulation_test.html" class="text-gray-700 hover:text-blue-500 font-medium">模拟试卷</a>
+                    <a href="jiaowotong.html" class="text-blue-500 font-medium border-b-2 border-blue-500">复习计划</a>
+                </div>
+                
+                <!-- 用户头像 -->
+                <div class="flex items-center">
+                    <img class="h-8 w-8 rounded-full" src="https://via.placeholder.com/32x32" alt="用户头像">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区 -->
+    <div class="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧主内容区 (占2/3) -->
+            <div class="lg:col-span-2">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800">智能复习方案生成</h1>
+                    <p class="text-gray-600 mt-2">上传您的学习资料，一键生成个性化复习计划</p>
+                </div>
+                
+                <!-- 已上传资料统计 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                    <div class="flex items-center text-blue-500">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span id="fileStats">已上传 <span id="fileCount">0</span> 份资料</span>
+                    </div>
+                </div>
+                
+                <!-- 文件上传区域 -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">上传学习资料</h3>
+                    <div id="dropZone" class="file-drop-zone">
+                        <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-3"></i>
+                        <p class="text-gray-600 mb-1">拖拽文件到此处或点击上传</p>
+                        <p class="text-gray-500 text-sm">支持PDF, PPT, PPTX, DOC, DOCX, ZIP格式，单个文件不超过200MB，最多上传10个文件</p>
+                        <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.ppt,.pptx,.doc,.docx,.zip">
+                    </div>
+                </div>
+                
+                <!-- 已上传文件列表 -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">已上传资料</h3>
+                    <div id="fileList">
+                        <!-- 文件列表将动态插入这里 -->
+                        <div class="text-center text-gray-500 py-8" id="emptyFileList">
+                            <i class="fas fa-inbox text-3xl mb-2"></i>
+                            <p>暂无上传文件，请上传学习资料</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设置区域 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <!-- 目标分数输入 -->
+                    <div class="bg-white rounded-xl shadow-md p-6 hover-lift">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-star text-yellow-500 text-xl mr-3"></i>
+                            <h3 class="font-medium text-gray-800">目标分数</h3>
+                        </div>
+                        <input type="number" id="targetScore" placeholder="请输入目标分数" class="w-full p-2 border border-gray-300 rounded-lg" min="0" max="100" value="85">
+                    </div>
+                    
+                    <!-- 可用复习时长 -->
+                    <div class="bg-white rounded-xl shadow-md p-6 hover-lift">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-calendar text-green-500 text-xl mr-3"></i>
+                            <h3 class="font-medium text-gray-800">复习天数</h3>
+                        </div>
+                        <input type="number" id="reviewDays" placeholder="请输入复习天数" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="30" value="7">
+                    </div>
+                </div>
+                
+                <!-- 智能生成按钮 -->
+                <div class="flex justify-center mb-8">
+                    <button id="generateBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-8 rounded-lg shadow-md hover-lift transition duration-300">
+                        <i class="fas fa-bolt mr-2"></i>一键生成复习方案
+                    </button>
+                </div>
+                
+                <!-- 预期结果提示 -->
+                <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-blue-500 text-xl mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="font-medium text-blue-800">预期结果</h3>
+                            <p id="expectedResult" class="text-blue-700 mt-1">请先上传学习资料</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧智能助手面板 (占1/3) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6 sticky top-24">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-robot text-blue-500 mr-2"></i>智能助手
+                    </h2>
+                    
+                    <!-- 进度条区域 -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700 font-medium">生成进度</span>
+                            <span id="progressText" class="text-blue-500 font-medium">0%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 推荐任务/生成的计划 -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-tasks text-green-500 mr-2"></i>复习计划
+                        </h3>
+                        <div id="planContainer">
+                            <ul id="dailyTasksList" class="space-y-3">
+                                <li class="text-gray-500 text-center py-4">
+                                    <i class="fas fa-hourglass-half text-xl mb-2 block"></i>
+                                    <p>等待生成复习计划</p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- 提示信息 -->
+                    <div id="statusMessage" class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-gray-500 text-lg mt-0.5 mr-2"></i>
+                            <p class="text-gray-600 text-sm">上传学习资料后，点击"一键生成复习方案"开始创建您的个性化学习计划</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 复习方案生成成功提示 -->
+                    <div id="successMessage" class="mt-6 p-4 bg-green-50 rounded-lg hidden">
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 text-lg mt-0.5 mr-2"></i>
+                            <div>
+                                <h4 class="font-medium text-green-800">复习方案已生成！</h4>
+                                <p class="text-green-700 text-sm mt-1">您的个性化学习计划已经准备就绪。</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF预览区域 -->
+                    <div id="pdfPreviewSection" class="mb-6 hidden">
+                        <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-file-pdf text-red-500 mr-2"></i>复习方案预览
+                        </h3>
+                        <div class="pdf-preview">
+                            <div class="preview-header">
+                                <i class="fas fa-book mr-2"></i>复习计划概览
+                            </div>
+                            <div id="pdfPreviewContent" class="preview-content">
+                                <!-- 预览内容将动态插入 -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let uploadedFiles = [];
+        const API_BASE_URL = window.location.origin; // API服务器地址
+        
+        // DOM元素引用
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const emptyFileList = document.getElementById('emptyFileList');
+        const fileCount = document.getElementById('fileCount');
+        const fileStats = document.getElementById('fileStats');
+        const expectedResult = document.getElementById('expectedResult');
+        const targetScore = document.getElementById('targetScore');
+        const reviewDays = document.getElementById('reviewDays');
+        const generateBtn = document.getElementById('generateBtn');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const dailyTasksList = document.getElementById('dailyTasksList');
+        const statusMessage = document.getElementById('statusMessage');
+        const successMessage = document.getElementById('successMessage');
+        const planContainer = document.getElementById('planContainer');
+        const pdfPreviewSection = document.getElementById('pdfPreviewSection');
+        const pdfPreviewContent = document.getElementById('pdfPreviewContent');
+        
+        // 文件类型映射
+        const fileIconMap = {
+            'pdf': { icon: 'fa-file-pdf', class: 'pdf-icon' },
+            'ppt': { icon: 'fa-file-powerpoint', class: 'ppt-icon' },
+            'pptx': { icon: 'fa-file-powerpoint', class: 'ppt-icon' },
+            'doc': { icon: 'fa-file-word', class: 'doc-icon' },
+            'docx': { icon: 'fa-file-word', class: 'doc-icon' },
+            'zip': { icon: 'fa-file-archive', class: 'zip-icon' }
+        };
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 文件拖拽事件
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+            
+            // 点击上传事件
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFiles(e.target.files);
+                }
+            });
+            
+            // 生成按钮点击事件
+            generateBtn.addEventListener('click', generateStudyPlan);
+            
+        });
+        
+        // 处理上传的文件
+        function handleFiles(files) {
+            // 检查文件数量限制
+            if (uploadedFiles.length + files.length > 10) {
+                alert('文件数量不能超过10个！');
+                return;
+            }
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // 检查文件类型
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                if (!fileIconMap[fileExt]) {
+                    alert(`不支持该文件类型: ${fileExt}`);
+                    continue;
+                }
+                
+                // 检查文件大小（200MB限制）
+                if (file.size > 200 * 1024 * 1024) {
+                    alert(`${file.name} 文件大小超过200MB限制！`);
+                    continue;
+                }
+                
+                // 添加到已上传文件列表
+                const fileInfo = {
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    size: file.size,
+                    type: fileExt,
+                    file: file, // 存储原始File对象
+                    pages: Math.floor(Math.random() * 50) + 10, // 模拟页数
+                    content: "", // 文件内容将在读取后存储
+                    summary: "" // 文件摘要将在处理后存储
+                };
+                
+                // 模拟读取文件内容（在实际应用中，这里会使用适当的库来读取不同类型的文件）
+                readFileContent(file, fileInfo);
+                
+                uploadedFiles.push(fileInfo);
+            }
+            
+            updateFileDisplay();
+        }
+        
+        // 更新文件显示
+        function updateFileDisplay() {
+            // 更新文件统计
+            const totalFiles = uploadedFiles.length;
+            
+            fileCount.textContent = totalFiles;
+            
+            // 如果有文件，隐藏空状态
+            if (totalFiles > 0) {
+                emptyFileList.style.display = 'none';
+                
+                // 清空现有列表并重新渲染
+                fileList.innerHTML = '';
+                
+                uploadedFiles.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="file-icon ${fileIconMap[file.type].class}">
+                                <i class="fas ${fileIconMap[file.type].icon}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-800 truncate max-w-xs">${file.name}</div>
+                                <div class="text-xs text-gray-500">${formatFileSize(file.size)}</div>
+                                ${file.summary ? `<div class="text-xs text-gray-600 mt-1 truncate max-w-xs">摘要: ${file.summary}</div>` : ''}
+                            </div>
+                            <div class="delete-file" data-file-id="${file.id}">
+                                <i class="fas fa-times text-gray-400 hover:text-red-500 cursor-pointer"></i>
+                            </div>
+                        </div>
+                    `;
+                    fileList.appendChild(fileItem);
+                });
+                
+                // 添加删除文件事件监听器
+                document.querySelectorAll('.delete-file').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const fileId = parseFloat(this.getAttribute('data-file-id'));
+                        // 从数组中移除文件
+                        uploadedFiles = uploadedFiles.filter(file => file.id !== fileId);
+                        // 重新渲染文件列表
+                        updateFileDisplay();
+                    });
+                });
+            } else {
+                emptyFileList.style.display = 'block';
+                fileList.innerHTML = '';
+            }
+            
+            // 更新预期结果
+            if (totalFiles > 0) {
+                const targetScore = document.getElementById('targetScore').value || 85;
+                const reviewDays = document.getElementById('reviewDays').value || 7;
+                
+                // 根据目标分数调整题目数量
+                let questionCount;
+                if (targetScore >= 90) {
+                    questionCount = Math.floor(totalFiles * 8);
+                } else if (targetScore >= 80) {
+                    questionCount = Math.floor(totalFiles * 6);
+                } else {
+                    questionCount = Math.floor(totalFiles * 4);
+                }
+                
+                const choiceQuestions = Math.floor(questionCount * 0.7);
+                const shortAnswerQuestions = questionCount - choiceQuestions;
+                
+                expectedResult.innerHTML = `
+                    预计生成 ${choiceQuestions} 道选择题 + ${shortAnswerQuestions} 道简答题<br>
+                    建议每日复习 ${Math.ceil(totalPages / reviewDays)} 页，共 ${reviewDays} 天完成
+                `;
+            } else {
+                expectedResult.textContent = '请先上传学习资料';
+            }
+        }
+        
+
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 读取文件内容并调用API进行处理
+        // 读取文件内容并调用API进行处理
+        async function readFileContent(file, fileInfo) {
+            // 创建FileReader实例
+            const reader = new FileReader();
+        
+            // 读取文件完成时的回调
+            reader.onload = async (e) => {
+            try {
+                // 显示文件正在处理中
+                fileInfo.status = 'processing';
+                updateFileDisplay();
+                
+            // 这里我们不直接调用通义千问API
+            // 而是将文件上传到后端，由后端处理
+            // 文件内容将在后端的analyze-files接口中处理
+            
+                fileInfo.content = `文件已上传: ${file.name}`;
+                fileInfo.summary = generateFallbackSummary(file.name, fileInfo.type);
+                fileInfo.status = 'completed';
+            
+            } catch (error) {
+                console.error('处理文件时出错:', error);
+                // 出错时使用备用方案
+                fileInfo.content = generateFallbackContent(file.name, fileInfo.type);
+                fileInfo.summary = generateFallbackSummary(file.name, fileInfo.type);
+                fileInfo.status = 'completed';
+            } finally {
+                // 更新界面显示
+                updateFileDisplay();
+                }
+            }
+        };
+    
+    // 读取文件错误时的回调
+    reader.onerror = (error) => {
+        console.error('文件读取失败:', error);
+        fileInfo.content = generateFallbackContent(file.name, fileInfo.type);
+        fileInfo.summary = generateFallbackSummary(file.name, fileInfo.type);
+        fileInfo.status = 'completed';
+        updateFileDisplay();
+    };
+    
+    // 根据文件类型选择读取方式
+    const fileExt = fileInfo.type.toLowerCase();
+    if (['pdf', 'doc', 'docx', 'ppt', 'pptx'].includes(fileExt)) {
+        // 对于文档类型，读取为二进制数据
+        reader.readAsArrayBuffer(file);
+    } else {
+        // 对于其他类型，读取为文本
+        reader.readAsText(file);
+    }
+
+        
+        // 调用通义千问API
+        async function callTongyiApi(fileData) {
+            try {
+                // 注意：这里需要根据通义千问API的实际接口进行调整
+                // 由于是前端调用，可能需要通过后端代理来避免CORS问题
+                
+                // 模拟API调用，实际应用中需要替换为真实的API调用
+                // 这里使用setTimeout模拟网络延迟
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        // 模拟API响应
+                        resolve({
+                            content: `这是 ${fileData.file_name} 的真实内容提取。
+
+根据文件内容分析，该文档包含以下主要章节：
+
+第1章 介绍
+- 概述了文档的主要目的和范围
+- 介绍了相关背景知识
+
+第2章 核心概念
+- 详细解释了关键术语和定义
+- 提供了相关理论基础
+
+第3章 实践应用
+- 介绍了实际应用场景
+- 提供了案例分析
+
+第4章 总结与展望
+- 总结了文档的主要发现
+- 提出了未来研究方向`,
+                            summary: `${fileData.file_name} 是一份详细的文档，涵盖了核心概念、实践应用等内容。文档结构清晰，包含多个章节，详细介绍了相关主题的理论基础和实际应用场景。`
+                        });
+                    }, 1500); // 模拟API调用延迟
+                });
+            } catch (error) {
+                console.error('API调用失败:', error);
+                return null;
+            }
+        }
+        
+        // 从内容生成摘要
+        function generateSummaryFromContent(content) {
+            // 简单实现：提取内容的前几句话作为摘要
+            const sentences = content.split('. ');
+            const summarySentences = sentences.slice(0, 3).join('. ');
+            return summarySentences.length > 0 ? summarySentences : '文档内容摘要';
+        }
+        
+        // 生成备用内容（当API调用失败时使用）
+        function generateFallbackContent(fileName, fileType) {
+            const baseName = fileName.replace(/\.[^/.]+$/, '');
+            
+            switch(fileType) {
+                case 'pdf':
+                    return `这是 ${fileName} 的内容提取。
+
+第1章 引言
+本章介绍了文档的背景和目的，包括研究的意义和价值。
+
+第2章 文献综述
+回顾了相关领域的研究现状，分析了现有研究的优缺点。
+
+第3章 研究方法
+详细描述了研究的设计、数据收集和分析方法。
+
+第4章 研究结果
+呈现了研究的主要发现和结果，包括数据统计和分析。
+
+第5章 结论与建议
+总结了研究的主要贡献，提出了实践建议和未来研究方向。`;
+                case 'ppt':
+                case 'pptx':
+                    return `幻灯片标题: ${baseName}
+
+第1页: 介绍
+- 主题背景
+- 演讲目的
+
+第2页: 主要内容概述
+- 核心概念
+- 关键要点
+
+第3页: 详细分析
+- 数据支持
+- 案例说明
+
+第4页: 结论与建议
+- 总结要点
+- 行动建议
+
+第5页: 问答环节`;
+                case 'doc':
+                case 'docx':
+                    return `文档: ${fileName}
+
+摘要: 本文档详细介绍了相关主题的背景、现状和未来发展趋势。
+
+1. 引言
+   - 研究背景
+   - 研究目的
+   - 研究方法
+
+2. 主体内容
+   - 理论基础
+   - 实践应用
+   - 案例分析
+
+3. 结论
+   - 主要发现
+   - 实践建议
+   - 未来展望`;
+                case 'zip':
+                    return `压缩包: ${fileName}
+
+包含以下文件和资源：
+- 练习题集
+- 参考资料
+- 课件讲义
+- 历年真题`;
+                default:
+                    return `${fileName} 的内容提取...`;
+            }
+        }
+        
+        // 生成备用摘要（当API调用失败时使用）
+        function generateFallbackSummary(fileName, fileType) {
+            const baseName = fileName.replace(/\.[^/.]+$/, '');
+            
+            switch(fileType) {
+                case 'pdf':
+                    return `${baseName} 是一份详细的PDF文档，包含多个章节，涵盖了核心概念、理论基础和实践应用等内容。文档结构清晰，内容全面，是学习相关主题的重要资料。`;
+                case 'ppt':
+                case 'pptx':
+                    return `${baseName} 是一套完整的幻灯片，包含多个页面，涵盖了主题介绍、核心内容、详细分析和结论建议等部分。幻灯片设计合理，内容丰富，适合作为教学或演示材料。`;
+                case 'doc':
+                case 'docx':
+                    return `${baseName} 是一份Word文档，详细介绍了相关主题的背景、现状和未来发展趋势。文档包含多个章节，结构完整，内容深入，为读者提供了全面的信息。`;
+                case 'zip':
+                    return `${baseName} 是一个压缩包，包含练习题集、参考资料、课件讲义和历年真题等多种资源，为学习和复习提供了全面的支持。`;
+                default:
+                    return `${baseName} 包含相关内容，是学习和参考的重要资料。`;
+            }
+        }
+        
+        // 生成复习方案
+        async function generateStudyPlan() {
+            if (uploadedFiles.length === 0) {
+                alert('请先上传学习资料');
+                return;
+            }
+            
+            // 更新UI状态
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
+            progressText.textContent = '0%';
+            progressFill.style.width = '0%';
+            
+            // 显示状态消息
+            statusMessage.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas fa-spinner animate-spin text-blue-500 text-lg mt-0.5 mr-2"></i>
+                    <div>
+                        <h4 class="font-medium text-blue-800">正在生成复习方案</h4>
+                        <p class="text-blue-700 text-sm mt-1">正在分析 ${uploadedFiles.length} 个文件，请稍候...</p>
+                    </div>
+                </div>
+            `;
+            statusMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+            
+            // 启动进度动画
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += 5;
+                    progressText.textContent = `${progress}%`;
+                    progressFill.style.width = `${progress}%`;
+                }
+            }, 200);
+            
+            try {
+                // 先分析文件
+                statusMessage.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-spinner animate-spin text-blue-500 text-lg mt-0.5 mr-2"></i>
+                        <div>
+                            <h4 class="font-medium text-blue-800">正在分析文件</h4>
+                            <p class="text-blue-700 text-sm mt-1">正在上传并分析 ${uploadedFiles.length} 个文件，请稍候...</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 创建FormData对象
+                const formData = new FormData();
+                uploadedFiles.forEach(file => {
+                    formData.append('files', file.file, file.name);
+                });
+                
+                // 调用文件分析API
+                const analyzeResponse = await fetch(`${API_BASE_URL}/api/analyze-files`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!analyzeResponse.ok) {
+                    throw new Error(`文件分析失败: ${analyzeResponse.status}`);
+                }
+                
+                const analyzeResult = await analyzeResponse.json();
+                
+                if (!analyzeResult.success) {
+                    throw new Error(analyzeResult.error || '文件分析失败');
+                }
+                
+                // 更新进度
+                progress = 40;
+                progressText.textContent = `${progress}%`;
+                progressFill.style.width = `${progress}%`;
+                
+                // 显示状态消息
+                statusMessage.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-spinner animate-spin text-blue-500 text-lg mt-0.5 mr-2"></i>
+                        <div>
+                            <h4 class="font-medium text-blue-800">正在生成复习方案</h4>
+                            <p class="text-blue-700 text-sm mt-1">文件分析成功，正在生成复习方案...</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 准备生成复习计划的数据
+                const fileData = analyzeResult.files.map((file, index) => ({
+                    name: file.name,
+                    type: file.type,
+                    content: uploadedFiles[index].content,
+                    analysis: analyzeResult.analysis[index].analysis
+                }));
+                
+                // 调用生成复习计划API
+                const generateResponse = await fetch(`${API_BASE_URL}/api/generate-study-plan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        files: fileData,
+                        targetScore: parseInt(targetScore.value) || 85,
+                        reviewDays: parseInt(reviewDays.value) || 7
+                    })
+                });
+                
+                if (!generateResponse.ok) {
+                    throw new Error(`生成复习方案失败: ${generateResponse.status}`);
+                }
+                
+                const generateResult = await generateResponse.json();
+                
+                if (!generateResult.success) {
+                    throw new Error(generateResult.error || '生成失败');
+                }
+                
+                // 更新进度到100%
+                clearInterval(progressInterval);
+                progressText.textContent = '100%';
+                progressFill.style.width = '100%';
+                
+                // 显示生成的复习计划
+                displayStudyPlanPreview(generateResult.studyPlan);
+                
+                // 显示成功消息
+                statusMessage.classList.add('hidden');
+                successMessage.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('生成复习方案失败:', error);
+                
+                // 停止进度条动画
+                clearInterval(progressInterval);
+                
+                // 显示错误消息
+                statusMessage.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-lg mt-0.5 mr-2"></i>
+                        <div>
+                            <h4 class="font-medium text-red-800">生成失败</h4>
+                            <p class="text-red-700 text-sm mt-1">${error.message}，正在使用备用方案...</p>
+                        </div>
+                    </div>
+                `;
+                
+                // 使用备用方案
+                setTimeout(() => {
+                    const fallbackPlan = generateFallbackStudyPlan();
+                    displayStudyPlanPreview(fallbackPlan);
+                    statusMessage.classList.add('hidden');
+                    successMessage.classList.remove('hidden');
+                }, 1500);
+                
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i>一键生成复习方案';
+            }
+        }
+        
+        // 显示复习计划预览
+        function displayStudyPlanPreview(studyPlan) {
+            if (!studyPlan) {
+                pdfPreviewContent.innerHTML = `
+                    <div class="text-center text-red-500 py-8">
+                        <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                        <p>生成失败，请重试</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 清空现有任务列表
+            dailyTasksList.innerHTML = '';
+            
+            // 处理原始响应
+            if (studyPlan.raw_response) {
+                pdfPreviewContent.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg">
+                        <h4 class="font-bold text-lg text-gray-800 mb-3">复习方案</h4>
+                        <pre class="whitespace-pre-wrap text-sm text-gray-700">${studyPlan.raw_response}</pre>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 结构化显示
+            const dailyPlans = studyPlan.daily_plans || [];
+            const planTitle = studyPlan.plan_title || '复习方案';
+            
+            // 显示每日任务
+            dailyPlans.forEach(dayPlan => {
+                const taskItem = document.createElement('li');
+                taskItem.className = 'flex items-start p-3 bg-blue-50 rounded-lg';
+                
+                taskItem.innerHTML = `
+                    <span class="bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-0.5">D${dayPlan.day}</span>
+                    <span class="text-gray-700">${dayPlan.title}</span>
+                `;
+                
+                dailyTasksList.appendChild(taskItem);
+            });
+            
+            // 生成PDF预览
+            pdfPreviewContent.innerHTML = '';
+            
+            dailyPlans.forEach(dayPlan => {
+                const dayPreview = document.createElement('div');
+                dayPreview.className = 'preview-day';
+                
+                const objectives = dayPlan.objectives || [];
+                const schedule = dayPlan.schedule || [];
+                const keyPoints = dayPlan.key_points || [];
+                
+                dayPreview.innerHTML = `
+                    <div class="font-medium text-gray-800">${dayPlan.title}</div>
+                    <div class="text-xs text-gray-600 mt-2">
+                        <div class="font-semibold mb-1">学习目标：</div>
+                        <ul class="list-disc list-inside">
+                            ${objectives.map(obj => `<li>${obj}</li>`).join('')}
+                        </ul>
+                        <div class="font-semibold mb-1 mt-2">时间安排：</div>
+                        ${schedule.map(item => `
+                            <div class="mb-1">
+                                <span class="font-medium">${item.time}</span> ${item.activity}
+                                <div class="text-gray-500">${item.details}</div>
+                            </div>
+                        `).join('')}
+                        <div class="font-semibold mb-1 mt-2">重点难点：</div>
+                        <ul class="list-disc list-inside">
+                            ${keyPoints.map(point => `<li>${point}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                
+                pdfPreviewContent.appendChild(dayPreview);
+            });
+        }
+        
+        // 生成备用复习计划（当API失败时使用）
+        function generateFallbackStudyPlan() {
+            const isMathContent = uploadedFiles.some(file => 
+                file.name.toLowerCase().includes('math') || 
+                file.name.toLowerCase().includes('数学') || 
+                file.name.toLowerCase().includes('代数') || 
+                file.name.toLowerCase().includes('几何')
+            );
+            
+            const subject = isMathContent ? '数学' : '计算机基础';
+            const totalDays = parseInt(reviewDays.value) || 7;
+            const dailyPlans = [];
+            
+            for (let i = 1; i <= totalDays; i++) {
+                dailyPlans.push({
+                    day: i,
+                    title: `第${i}天：${subject}${i === 1 ? '基础知识' : i === totalDays ? '综合复习' : '重点内容'}复习`,
+                    objectives: [
+                        `掌握${subject}${i === 1 ? '基础知识' : i === totalDays ? '综合应用' : '核心概念'}`,
+                        `完成相关练习题目`,
+                        `整理知识点笔记`
+                    ],
+                    schedule: [
+                        { time: '9:00-10:30', activity: '知识点学习', details: `学习${subject}相关知识点，重点关注基本概念和原理` },
+                        { time: '10:45-12:00', activity: '例题分析', details: `分析典型例题，理解解题思路` },
+                        { time: '14:00-15:30', activity: '习题练习', details: `完成相关习题，巩固知识点` },
+                        { time: '15:45-17:00', activity: '错题整理', details: `整理错题，分析错误原因` },
+                        { time: '19:00-20:30', activity: '知识点回顾', details: `回顾当天学习内容，强化记忆` }
+                    ],
+                    key_points: [
+                        `${subject}${i === 1 ? '基础知识' : i === totalDays ? '综合应用' : '核心概念'}`,
+                        `解题技巧和方法`,
+                        `常见错误分析`
+                    ]
+                });
+            }
+            
+            return {
+                plan_title: `${subject}个性化复习计划（备用方案）`,
+                total_days: totalDays,
+                daily_plans: dailyPlans
+            };
+        }
+    </script>
+</body>
+</html>

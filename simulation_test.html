@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交我通 - 模拟测试</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Font Awesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- 引入 html2pdf.js 用于生成PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3B82F6;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .file-drop-zone {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-drop-zone.drag-over {
+            border-color: #3B82F6;
+            background-color: rgba(59, 130, 246, 0.05);
+        }
+        .file-item {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+        .file-item:hover {
+            background-color: #f1f5f9;
+        }
+        .file-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+        }
+        .pdf-icon { background-color: #fee2e2; color: #ef4444; }
+        .ppt-icon { background-color: #fef3c7; color: #f59e0b; }
+        .doc-icon { background-color: #dbeafe; color: #3b82f6; }
+        .zip-icon { background-color: #ede9fe; color: #8b5cf6; }
+        .remove-btn {
+            transition: all 0.2s ease;
+        }
+        .remove-btn:hover {
+            transform: scale(1.1);
+        }
+        .simulation-preview {
+            background-color: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .preview-header {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .preview-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .question-item {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .question-title {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .question-options {
+            margin-bottom: 0.5rem;
+        }
+        .question-answer {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        .answer-label {
+            font-weight: bold;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="fixed top-0 left-0 right-0 bg-white glass-effect shadow-md z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center">
+                    <span class="text-xl font-bold text-blue-500">交我通</span>
+                </div>
+                
+                <!-- 导航链接 -->
+                <div class="hidden md:flex md:items-center md:space-x-8">
+                    <a href="simulation_test.html" class="text-blue-500 font-medium border-b-2 border-blue-500">模拟试卷</a>
+                    <a href="jiaowotong.html" class="text-gray-700 hover:text-blue-500 font-medium">复习计划</a>
+                </div>
+                
+                <!-- 用户头像 -->
+                <div class="flex items-center">
+                    <img class="h-8 w-8 rounded-full" src="https://via.placeholder.com/32x32" alt="用户头像">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区 -->
+    <div class="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧主内容区 (占2/3) -->
+            <div class="lg:col-span-2">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800">智能模拟卷生成</h1>
+                    <p class="text-gray-600 mt-2">上传历年真题，一键生成个性化模拟卷</p>
+                </div>
+                
+                <!-- 已上传资料统计 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+                    <div class="flex items-center text-blue-500">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span id="fileStats">已上传 <span id="fileCount">0</span> 份资料</span>
+                    </div>
+                </div>
+                
+                <!-- 文件上传区域 -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">上传历年真题</h3>
+                    <div id="dropZone" class="file-drop-zone">
+                        <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-3"></i>
+                        <p class="text-gray-600 mb-1">拖拽文件到此处或点击上传</p>
+                        <p class="text-gray-500 text-sm">支持PDF, PPT, PPTX, DOC, DOCX格式，单个文件不超过200MB，最多上传10个文件</p>
+                        <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.ppt,.pptx,.doc,.docx">
+                    </div>
+                </div>
+                
+                <!-- 已上传文件列表 -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-3">已上传资料</h3>
+                    <div id="fileList">
+                        <!-- 文件列表将动态插入这里 -->
+                        <div class="text-center text-gray-500 py-8" id="emptyFileList">
+                            <i class="fas fa-inbox text-3xl mb-2"></i>
+                            <p>暂无上传文件，请上传历年真题</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设置区域 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- 目标分数输入 -->
+                    <div class="bg-white rounded-xl shadow-md p-6 hover-lift">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-star text-yellow-500 text-xl mr-3"></i>
+                            <h3 class="font-medium text-gray-800">预期分数</h3>
+                        </div>
+                        <input type="number" id="targetScore" placeholder="请输入预期分数" class="w-full p-2 border border-gray-300 rounded-lg" min="0" max="100" value="85">
+                    </div>
+                    
+                    <!-- 题目数量 -->
+                    <div class="bg-white rounded-xl shadow-md p-6 hover-lift">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-list-ol text-blue-500 text-xl mr-3"></i>
+                            <h3 class="font-medium text-gray-800">题目数量</h3>
+                        </div>
+                        <input type="number" id="questionCount" placeholder="请输入题目数量" class="w-full p-2 border border-gray-300 rounded-lg" min="1" max="100" value="50">
+                    </div>
+                    
+                    <!-- 题目类型 -->
+                    <div class="bg-white rounded-xl shadow-md p-6 hover-lift">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-tags text-green-500 text-xl mr-3"></i>
+                            <h3 class="font-medium text-gray-800">题目类型</h3>
+                        </div>
+                        <select id="questionType" class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option value="all">全部类型</option>
+                            <option value="single">单选题</option>
+                            <option value="multiple">多选题</option>
+                            <option value="judgment">判断题</option>
+                            <option value="essay">简答题</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 智能生成按钮 -->
+                <div class="flex justify-center mb-8">
+                    <button id="generateBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 px-8 rounded-lg shadow-md hover-lift transition duration-300">
+                        <i class="fas fa-bolt mr-2"></i>一键生成模拟卷
+                    </button>
+                </div>
+                
+                <!-- 预期结果提示 -->
+                <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-blue-500 text-xl mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="font-medium text-blue-800">预期结果</h3>
+                            <p id="expectedResult" class="text-blue-700 mt-1">请先上传历年真题</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧智能助手面板 (占1/3) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6 sticky top-24">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-robot text-blue-500 mr-2"></i>智能助手
+                    </h2>
+                    
+                    <!-- 进度条区域 -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700 font-medium">生成进度</span>
+                            <span id="progressText" class="text-blue-500 font-medium">0%</span>
+                        </div>
+                        <div class="progress-bar bg-gray-200">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 模拟卷预览 -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-file-alt text-blue-500 mr-2"></i>模拟卷预览
+                        </h3>
+                        <div id="simulationPreview" class="simulation-preview">
+                            <div class="preview-header">
+                                <i class="fas fa-clipboard-list mr-2"></i>模拟卷内容
+                            </div>
+                            <div id="previewContent" class="preview-content">
+                                <div class="text-center text-gray-500 py-8">
+                                    <i class="fas fa-hourglass-half text-xl mb-2 block"></i>
+                                    <p>等待生成模拟卷</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 提示信息 -->
+                    <div id="statusMessage" class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-gray-500 text-lg mt-0.5 mr-2"></i>
+                            <p class="text-gray-600 text-sm">上传历年真题后，点击"一键生成模拟卷"开始创建您的个性化模拟测试卷</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 模拟卷生成成功提示 -->
+                    <div id="successMessage" class="mt-6 p-4 bg-green-50 rounded-lg hidden">
+                        <div class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 text-lg mt-0.5 mr-2"></i>
+                            <div>
+                                <h4 class="font-medium text-green-800">模拟卷已生成！</h4>
+                                <p class="text-green-700 text-sm mt-1">您的个性化模拟测试卷已经准备就绪。</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 下载生成的模拟卷 -->
+                    <div id="downloadSection" class="mt-4 hidden">
+                        <button id="downloadSimulationBtn" class="w-full bg-white border border-blue-500 text-blue-500 hover:bg-blue-50 font-medium py-2 px-4 rounded-lg shadow-sm transition duration-300">
+                            <i class="fas fa-download mr-2"></i>下载模拟卷
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // 全局变量
+    let uploadedFiles = [];
+    const API_BASE_URL = window.location.origin; // 你的API服务器地址
+    
+    // DOM元素引用
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const emptyFileList = document.getElementById('emptyFileList');
+    const fileCount = document.getElementById('fileCount');
+    const targetScore = document.getElementById('targetScore');
+    const questionCount = document.getElementById('questionCount');
+    const questionType = document.getElementById('questionType');
+    const generateBtn = document.getElementById('generateBtn');
+    const expectedResult = document.getElementById('expectedResult');
+    const progressText = document.getElementById('progressText');
+    const progressFill = document.getElementById('progressFill');
+    const statusMessage = document.getElementById('statusMessage');
+    const successMessage = document.getElementById('successMessage');
+    const downloadSection = document.getElementById('downloadSection');
+    const downloadSimulationBtn = document.getElementById('downloadSimulationBtn');
+    const previewContent = document.getElementById('previewContent');
+    
+    // 初始化
+    function init() {
+        setupEventListeners();
+        updateFileDisplay();
+    }
+    
+    // 设置事件监听器
+    function setupEventListeners() {
+        // 文件拖拽上传
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+        
+        // 文件选择
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFiles(e.target.files);
+            }
+        });
+        
+        // 生成模拟卷按钮
+        generateBtn.addEventListener('click', generateSimulationPaper);
+        
+        // 下载模拟卷按钮
+        downloadSimulationBtn.addEventListener('click', downloadSimulationPaper);
+    }
+    
+    // 处理文件上传
+    function handleFiles(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (uploadedFiles.length >= 10) {
+                alert('最多只能上传10个文件');
+                break;
+            }
+            if (file.size > 200 * 1024 * 1024) {
+                alert('单个文件大小不能超过200MB');
+                continue;
+            }
+            if (!['application/pdf', 'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'].includes(file.type)) {
+                alert('不支持该文件类型T^T');
+                continue;
+            }
+            
+            const fileId = Date.now() + i;
+            const fileItem = {
+                id: fileId,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                file: file,
+                pageCount: Math.floor(Math.random() * 50) + 1, // 模拟页数
+                content: null // 稍后读取内容
+            };
+            
+            uploadedFiles.push(fileItem);
+            
+            // 异步读取文件内容
+            readFileAsText(file).then(content => {
+                fileItem.content = content.substring(0, 10000); // 限制内容长度
+                console.log(`已读取文件: ${file.name}，长度: ${content.length}字符`);
+            }).catch(error => {
+                console.error('读取文件失败:', error);
+            });
+        }
+        
+        updateFileDisplay();
+        updateExpectedResult();
+    }
+    
+    // 读取文件为文本
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            if (file.type.includes('pdf')) {
+                // 对于PDF文件，我们只能读取为DataURL，实际解析需要后端处理
+                reader.onload = (e) => {
+                    resolve(`[PDF文件: ${file.name}] 内容需要后端解析`);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // 对于文本文件，直接读取
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('文件读取失败'));
+                reader.readAsText(file);
+            }
+        });
+    }
+    
+    // 更新文件显示
+    function updateFileDisplay() {
+        fileCount.textContent = uploadedFiles.length;
+        
+        if (uploadedFiles.length === 0) {
+            emptyFileList.classList.remove('hidden');
+            return;
+        }
+        
+        emptyFileList.classList.add('hidden');
+        fileList.innerHTML = '';
+        
+        uploadedFiles.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.fileId = file.id;
+            
+            // 确定文件图标
+            let iconClass = 'doc-icon';
+            let icon = 'fa-file-word';
+            if (file.type.includes('pdf')) {
+                iconClass = 'pdf-icon';
+                icon = 'fa-file-pdf';
+            } else if (file.type.includes('powerpoint') || file.type.includes('ppt')) {
+                iconClass = 'ppt-icon';
+                icon = 'fa-file-powerpoint';
+            }
+            
+            fileItem.innerHTML = `
+                <div class="flex items-center flex-1">
+                    <div class="file-icon ${iconClass}">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-800 truncate" style="max-width: 200px;">${file.name}</div>
+                        <div class="text-sm text-gray-500">${formatFileSize(file.size)}</div>
+                        ${file.content ? '<div class="text-xs text-green-600 mt-1">✓ 已加载内容</div>' : '<div class="text-xs text-yellow-600 mt-1">⌛ 正在读取...</div>'}
+                    </div>
+                </div>
+                <button class="delete-file text-gray-400 hover:text-red-500 remove-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            fileList.appendChild(fileItem);
+        });
+        
+        // 添加删除文件事件监听器
+        document.querySelectorAll('.delete-file').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const fileId = parseInt(this.closest('.file-item').dataset.fileId);
+                uploadedFiles = uploadedFiles.filter(file => file.id !== fileId);
+                updateFileDisplay();
+                updateExpectedResult();
+            });
+        });
+    }
+    
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // 更新预期结果
+    function updateExpectedResult() {
+        if (uploadedFiles.length === 0) {
+            expectedResult.textContent = '请先上传历年真题';
+            return;
+        }
+        
+        const score = targetScore.value;
+        const count = questionCount.value;
+        const type = questionType.options[questionType.selectedIndex].text;
+        
+        expectedResult.textContent = `将根据上传的${uploadedFiles.length}份历年真题，生成一套包含${count}道${type}的模拟卷，难度将根据预期分数${score}分进行调整`;
+    }
+    
+    // 生成模拟卷
+    async function generateSimulationPaper() {
+        if (uploadedFiles.length === 0) {
+            alert('请先上传历年真题');
+            return;
+        }
+        
+        // 更新UI状态
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>生成中...';
+        progressText.textContent = '0%';
+        progressFill.style.width = '0%';
+        
+        // 显示状态消息
+        statusMessage.innerHTML = `
+            <div class="flex items-start">
+                <i class="fas fa-spinner animate-spin text-blue-500 text-lg mt-0.5 mr-2"></i>
+                <div>
+                    <h4 class="font-medium text-blue-800">正在生成模拟卷</h4>
+                    <p class="text-blue-700 text-sm mt-1">正在分析 ${uploadedFiles.length} 个文件，请稍候...</p>
+                </div>
+            </div>
+        `;
+        statusMessage.classList.remove('hidden');
+        successMessage.classList.add('hidden');
+        downloadSection.classList.add('hidden');
+        
+        // 启动进度动画
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            if (progress < 90) {
+                progress += 5;
+                progressText.textContent = `${progress}%`;
+                progressFill.style.width = `${progress}%`;
+            }
+        }, 200);
+        
+        try {
+            // 先分析文件
+            statusMessage.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas fa-spinner animate-spin text-blue-500 text-lg mt-0.5 mr-2"></i>
+                    <div>
+                        <h4 class="font-medium text-blue-800">正在分析文件</h4>
+                        <p class="text-blue-700 text-sm mt-1">正在上传并分析 ${uploadedFiles.length} 个文件，请稍候...</p>
+                    </div>
+                </div>
+            `;
+            
+            // 创建FormData对象
+            const formData = new FormData();
+            uploadedFiles.forEach(file => {
+                formData.append('files', file.file, file.name);
+            });
+            
+            // 调用文件分析API
+            const analyzeResponse = await fetch(`${API_BASE_URL}/api/analyze-files`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!analyzeResponse.ok) {
+                throw new Error(`文件分析失败: ${analyzeResponse.status}`);
+            }
+            
+            const analyzeResult = await analyzeResponse.json();
+            
+            if (!analyzeResult.success) {
+                throw new Error(analyzeResult.error || '文件分析失败');
+            }
+            
+            // 更新进度
+            progress = 40;
+            progressText.textContent = `${progress}%`;
+            progressFill.style.width = `${progress}%`;
+            
+            // 显示状态消息
+            statusMessage.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas fa-spinner animate-spin text-blue-500 text-lg mt-0.5 mr-2"></i>
+                    <div>
+                        <h4 class="font-medium text-blue-800">正在生成模拟卷</h4>
+                        <p class="text-blue-700 text-sm mt-1">文件分析成功，正在生成模拟卷...</p>
+                    </div>
+                </div>
+            `;
+            
+            // 准备生成模拟卷的数据
+            const fileData = analyzeResult.files.map((file, index) => ({
+                name: file.name,
+                type: file.type,
+                content: uploadedFiles[index].content,
+                analysis: analyzeResult.analysis[index].analysis
+            }));
+            
+            // 调用生成模拟卷API
+            const generateResponse = await fetch(`${API_BASE_URL}/api/generate-test-paper`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    files: fileData,
+                    targetScore: parseInt(targetScore.value) || 85,
+                    questionCount: parseInt(questionCount.value) || 50,
+                    questionType: questionType.value || 'all'
+                })
+            });
+            
+            if (!generateResponse.ok) {
+                throw new Error(`生成模拟卷失败: ${generateResponse.status}`);
+            }
+            
+            const generateResult = await generateResponse.json();
+            
+            if (!generateResult.success) {
+                throw new Error(generateResult.error || '生成失败');
+            }
+            
+            // 更新进度到100%
+            clearInterval(progressInterval);
+            progressText.textContent = '100%';
+            progressFill.style.width = '100%';
+            
+            // 显示生成的模拟卷
+            displaySimulationPreview(generateResult.testPaper);
+            
+            // 显示成功消息
+            statusMessage.classList.add('hidden');
+            successMessage.classList.remove('hidden');
+            downloadSection.classList.remove('hidden');
+            
+        } catch (error) {
+            console.error('生成模拟卷失败:', error);
+            
+            // 停止进度条动画
+            clearInterval(progressInterval);
+            
+            // 显示错误消息
+            statusMessage.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-lg mt-0.5 mr-2"></i>
+                    <div>
+                        <h4 class="font-medium text-red-800">生成失败</h4>
+                        <p class="text-red-700 text-sm mt-1">${error.message}，正在使用备用方案...</p>
+                    </div>
+                </div>
+            `;
+            
+            // 使用备用方案
+            setTimeout(() => {
+                const fallbackPaper = generateFallbackSimulationPaper();
+                displaySimulationPreview(fallbackPaper);
+                statusMessage.classList.add('hidden');
+                successMessage.classList.remove('hidden');
+                downloadSection.classList.remove('hidden');
+            }, 1500);
+            
+        } finally {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-bolt mr-2"></i>一键生成模拟卷';
+        }
+    }
+    
+    // 显示模拟卷预览
+    function displaySimulationPreview(testPaper) {
+        if (!testPaper) {
+            previewContent.innerHTML = `
+                <div class="text-center text-red-500 py-8">
+                    <i class="fas fa-exclamation-triangle text-xl mb-2"></i>
+                    <p>生成失败，请重试</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // 处理原始响应
+        if (testPaper.raw_response) {
+            previewContent.innerHTML = `
+                <div class="bg-white p-4 rounded-lg">
+                    <h4 class="font-bold text-lg text-gray-800 mb-3">模拟测试卷</h4>
+                    <pre class="whitespace-pre-wrap text-sm text-gray-700">${testPaper.raw_response}</pre>
+                </div>
+            `;
+            return;
+        }
+        
+        // 结构化显示
+        const questions = testPaper.questions || [];
+        const title = testPaper.title || '模拟测试卷';
+        const analysis = testPaper.analysis || {};
+        
+        let html = `
+            <div class="mb-6">
+                <h4 class="font-bold text-xl text-gray-800 mb-2">${title}</h4>
+        `;
+        
+        if (analysis.total_questions || analysis.difficulty_distribution || analysis.knowledge_coverage) {
+            html += `
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h5 class="font-semibold text-blue-800 mb-2">试卷分析</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        ${analysis.total_questions ? `
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-600">${analysis.total_questions}</div>
+                                <div class="text-sm text-blue-800">题目总数</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${analysis.difficulty_distribution ? `
+                            <div class="text-center">
+                                <div class="text-sm font-medium text-gray-700 mb-1">难度分布</div>
+                                <div class="text-xs">
+                                    ${Object.entries(analysis.difficulty_distribution).map(([level, percent]) => `
+                                        <div class="flex items-center mb-1">
+                                            <span class="w-16 text-left">${level}:</span>
+                                            <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-blue-500 h-2 rounded-full" style="width: ${percent * 100}%"></div>
+                                            </div>
+                                            <span class="w-10 text-right">${Math.round(percent * 100)}%</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        ${analysis.knowledge_coverage && analysis.knowledge_coverage.length > 0 ? `
+                            <div class="text-center">
+                                <div class="text-sm font-medium text-gray-700 mb-1">知识点覆盖</div>
+                                <div class="flex flex-wrap gap-1 justify-center">
+                                    ${analysis.knowledge_coverage.slice(0, 3).map(point => `
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">${point}</span>
+                                    `).join('')}
+                                    ${analysis.knowledge_coverage.length > 3 ? `<span class="text-xs text-gray-500">等${analysis.knowledge_coverage.length}个</span>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += `</div><div class="space-y-6">`;
+        
+        if (questions.length === 0) {
+            html += `
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-file-alt text-3xl mb-3"></i>
+                    <p>未生成题目</p>
+                </div>
+            `;
+        } else {
+            questions.forEach((question, index) => {
+                const qType = question.type || 'single_choice';
+                const typeText = getQuestionTypeText(qType);
+                const difficulty = question.difficulty || '中等';
+                
+                html += `
+                    <div class="question-item bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center">
+                                <span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-bold mr-2">${index + 1}</span>
+                                <span class="question-title font-semibold text-gray-800">${typeText}</span>
+                            </div>
+                            <span class="px-2 py-1 text-xs rounded-full ${
+                                difficulty === '困难' ? 'bg-red-100 text-red-800' :
+                                difficulty === '中等' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                            }">${difficulty}</span>
+                        </div>
+                        
+                        <div class="question-content text-gray-700 mb-4">
+                            ${question.question ? question.question.replace(/\n/g, '<br>') : '题目内容'}
+                        </div>
+                        
+                        ${question.options && question.options.length > 0 ? `
+                            <div class="question-options space-y-2 mb-4">
+                                ${question.options.map((option, optIndex) => `
+                                    <div class="flex items-start p-2 hover:bg-gray-50 rounded">
+                                        <span class="w-6 h-6 border border-gray-300 rounded flex items-center justify-center text-sm font-medium mr-3 mt-0.5">
+                                            ${String.fromCharCode(65 + optIndex)}
+                                        </span>
+                                        <span class="flex-1">${option}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="question-answer bg-gray-50 p-4 rounded-lg">
+                            <div class="mb-3">
+                                <span class="font-semibold text-blue-600">答案：</span>
+                                <span class="ml-2 font-bold text-gray-800">${question.correct_answer || question.answer || '暂无'}</span>
+                            </div>
+                            
+                            ${question.explanation ? `
+                                <div class="mb-3">
+                                    <span class="font-semibold text-green-600">解析：</span>
+                                    <p class="text-gray-700 mt-1 text-sm">${question.explanation}</p>
+                                </div>
+                            ` : ''}
+                            
+                            ${question.knowledge_points && question.knowledge_points.length > 0 ? `
+                                <div>
+                                    <span class="font-semibold text-purple-600">知识点：</span>
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        ${question.knowledge_points.map(point => `
+                                            <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">${point}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        html += `</div>`;
+        previewContent.innerHTML = html;
+    }
+    
+    // 备用方案：生成模拟卷（当API失败时使用）
+    function generateFallbackSimulationPaper() {
+        const isMathContent = uploadedFiles.some(file => 
+            file.name.toLowerCase().includes('math') || 
+            file.name.toLowerCase().includes('数学') || 
+            file.name.toLowerCase().includes('代数') || 
+            file.name.toLowerCase().includes('几何')
+        );
+        
+        if (isMathContent) {
+            return {
+                title: '数学模拟测试卷（备用方案）',
+                questions: [
+                    {
+                        id: 1,
+                        type: 'single_choice',
+                        question: '若函数 f(x) = x² - 3x + 2，则 f(2) 的值为：',
+                        options: ['A. 0', 'B. 1', 'C. 2', 'D. 3'],
+                        correct_answer: 'A',
+                        explanation: '将 x=2 代入函数 f(x) = x² - 3x + 2，得 f(2) = 2² - 3×2 + 2 = 4 - 6 + 2 = 0。',
+                        difficulty: '简单',
+                        knowledge_points: ['函数求值', '代数运算']
+                    },
+                    {
+                        id: 2,
+                        type: 'multiple_choice',
+                        question: '以下哪些是二次函数的性质？',
+                        options: ['A. 图像是抛物线', 'B. 最高次数为2', 'C. 一定有两个实根', 'D. 关于对称轴对称'],
+                        correct_answer: 'A, B, D',
+                        explanation: '二次函数的图像是抛物线，最高次数为2，关于对称轴对称，但不一定有两个实根（当判别式小于0时无实根）。',
+                        difficulty: '中等',
+                        knowledge_points: ['二次函数', '函数性质']
+                    },
+                    {
+                        id: 3,
+                        type: 'judgment',
+                        question: 'π 是有理数。',
+                        options: ['正确', '错误'],
+                        correct_answer: '错误',
+                        explanation: 'π 是无理数，不能表示为两个整数的比值。',
+                        difficulty: '简单',
+                        knowledge_points: ['无理数', '实数分类']
+                    }
+                ],
+                analysis: {
+                    total_questions: 3,
+                    difficulty_distribution: { "简单": 0.67, "中等": 0.33, "困难": 0 },
+                    knowledge_coverage: ['函数求值', '代数运算', '二次函数', '函数性质', '无理数', '实数分类']
+                }
+            };
+        } else {
+            return {
+                title: '模拟测试卷（备用方案）',
+                questions: [
+                    {
+                        id: 1,
+                        type: 'single_choice',
+                        question: '以下关于计算机网络的说法，正确的是：',
+                        options: ['A. 计算机网络只能用于传递数据', 'B. 计算机网络由硬件和软件组成', 'C. 计算机网络不需要协议', 'D. 计算机网络只能在局域网中使用'],
+                        correct_answer: 'B',
+                        explanation: '计算机网络是由硬件设备和软件系统组成的，用于实现计算机之间的通信和资源共享。',
+                        difficulty: '简单',
+                        knowledge_points: ['计算机网络', '网络组成']
+                    },
+                    {
+                        id: 2,
+                        type: 'multiple_choice',
+                        question: '以下属于操作系统的是：',
+                        options: ['A. Windows', 'B. Linux', 'C. Office', 'D. macOS'],
+                        correct_answer: 'A, B, D',
+                        explanation: 'Windows、Linux和macOS都是操作系统，而Office是办公软件。',
+                        difficulty: '简单',
+                        knowledge_points: ['操作系统', '软件分类']
+                    },
+                    {
+                        id: 3,
+                        type: 'essay',
+                        question: '请简述计算机病毒的特点和预防措施。',
+                        correct_answer: '计算机病毒的特点包括：传染性、潜伏性、破坏性、隐蔽性等。预防措施包括：安装杀毒软件、定期更新系统、不随意打开陌生邮件附件、使用安全的网络环境等。',
+                        explanation: '本题主要考察对计算机病毒基本概念的理解和预防意识。',
+                        difficulty: '中等',
+                        knowledge_points: ['计算机安全', '病毒防护']
+                    }
+                ],
+                analysis: {
+                    total_questions: 3,
+                    difficulty_distribution: { "简单": 0.67, "中等": 0.33, "困难": 0 },
+                    knowledge_coverage: ['计算机网络', '网络组成', '操作系统', '软件分类', '计算机安全', '病毒防护']
+                }
+            };
+        }
+    }
+    
+    // 辅助函数：获取题型文本
+    function getQuestionTypeText(type) {
+        const typeMap = {
+            'single_choice': '单选题',
+            'multiple_choice': '多选题',
+            'judgment': '判断题',
+            'essay': '简答题',
+            'single': '单选题',
+            'multiple': '多选题'
+        };
+        return typeMap[type] || type || '未知题型';
+    }
+    
+    // 下载模拟卷
+    function downloadSimulationPaper() {
+        const title = previewContent.querySelector('h4')?.textContent || '模拟测试卷';
+        const questions = previewContent.querySelectorAll('.question-item');
+        
+        if (questions.length === 0) {
+            alert('没有可下载的内容');
+            return;
+        }
+        
+        // 创建一个临时的HTML容器用于生成PDF
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.padding = '40px';
+        pdfContainer.style.fontFamily = 'Arial, sans-serif';
+        pdfContainer.style.fontSize = '14px';
+        pdfContainer.style.lineHeight = '1.4';
+        pdfContainer.style.whiteSpace = 'pre-line';
+        
+        // 添加标题
+        const titleElement = document.createElement('h1');
+        titleElement.style.textAlign = 'center';
+        titleElement.style.marginBottom = '30px';
+        titleElement.style.fontSize = '24px';
+        titleElement.style.fontWeight = 'bold';
+        titleElement.style.color = '#1f2937';
+        titleElement.textContent = title;
+        pdfContainer.appendChild(titleElement);
+        
+        // 添加分割线
+        const hr = document.createElement('hr');
+        hr.style.border = 'none';
+        hr.style.borderTop = '2px solid #3b82f6';
+        hr.style.marginBottom = '30px';
+        pdfContainer.appendChild(hr);
+        
+        // 添加题目
+        questions.forEach((question, index) => {
+            const questionDiv = document.createElement('div');
+            questionDiv.style.marginBottom = '12px';
+            questionDiv.style.pageBreakInside = 'avoid';
+            questionDiv.style.whiteSpace = 'pre-line';
+            
+            // 题目编号和内容
+            const qTitle = question.querySelector('.question-title')?.textContent || `第${index + 1}题`;
+            const qContent = question.querySelector('.question-content')?.textContent || '';
+            const options = question.querySelector('.question-options')?.textContent || '';
+            const answer = question.querySelector('.question-answer')?.textContent || '';
+            const explanation = question.querySelector('.question-explanation')?.textContent || '';
+            const difficulty = question.querySelector('.question-difficulty')?.textContent || '';
+            
+            // 题目标题
+            const qTitleDiv = document.createElement('div');
+            qTitleDiv.style.fontSize = '16px';
+            qTitleDiv.style.fontWeight = 'bold';
+            qTitleDiv.style.color = '#1f2937';
+            qTitleDiv.style.marginBottom = '8px';
+            qTitleDiv.textContent = `${index + 1}. ${qTitle}`;
+            questionDiv.appendChild(qTitleDiv);
+            
+            // 题目内容
+            if (qContent) {
+                const qContentDiv = document.createElement('div');
+                qContentDiv.style.marginBottom = '10px';
+                qContentDiv.style.color = '#374151';
+                qContentDiv.textContent = qContent;
+                questionDiv.appendChild(qContentDiv);
+            }
+            
+            // 选项
+            if (options) {
+                const optionsDiv = document.createElement('div');
+                optionsDiv.style.marginBottom = '12px';
+                optionsDiv.style.color = '#4b5563';
+                optionsDiv.style.display = 'flex';
+                optionsDiv.style.flexWrap = 'wrap';
+                optionsDiv.style.gap = '12px';
+                
+                // 处理选项，将每个选项分开
+                let formattedOptions = options;
+                // 确保选项正确分行
+                formattedOptions = formattedOptions.replace(/([A-Z]\.)/g, '\n$1');
+                formattedOptions = formattedOptions.trim();
+                
+                const optionItems = formattedOptions.split('\n').filter(opt => opt.trim());
+                optionItems.forEach(opt => {
+                    const optSpan = document.createElement('span');
+                    optSpan.textContent = opt;
+                    optionsDiv.appendChild(optSpan);
+                });
+                
+                questionDiv.appendChild(optionsDiv);
+            }
+            
+            // 答案
+            const answerDiv = document.createElement('div');
+            answerDiv.style.marginTop = '10px';
+            answerDiv.style.padding = '8px';
+            answerDiv.style.backgroundColor = '#dbeafe';
+            answerDiv.style.borderRadius = '5px';
+            answerDiv.style.color = '#1e40af';
+            answerDiv.style.fontWeight = 'bold';
+            answerDiv.textContent = answer;
+            questionDiv.appendChild(answerDiv);
+            
+            // 解析
+            if (explanation) {
+                const explanationDiv = document.createElement('div');
+                explanationDiv.style.marginTop = '10px';
+                explanationDiv.style.padding = '8px';
+                explanationDiv.style.backgroundColor = '#fef3c7';
+                explanationDiv.style.borderRadius = '5px';
+                explanationDiv.style.color = '#92400e';
+                explanationDiv.textContent = `解析：${explanation}`;
+                questionDiv.appendChild(explanationDiv);
+            }
+            
+            // 难度
+            if (difficulty) {
+                const difficultyDiv = document.createElement('div');
+                difficultyDiv.style.marginTop = '8px';
+                difficultyDiv.style.fontSize = '12px';
+                difficultyDiv.style.color = '#6b7280';
+                difficultyDiv.textContent = difficulty;
+                questionDiv.appendChild(difficultyDiv);
+            }
+            
+            pdfContainer.appendChild(questionDiv);
+        });
+        
+        // 添加页脚
+        const footer = document.createElement('div');
+        footer.style.marginTop = '40px';
+        footer.style.paddingTop = '20px';
+        footer.style.borderTop = '1px solid #e5e7eb';
+        footer.style.textAlign = 'center';
+        footer.style.color = '#6b7280';
+        footer.style.fontSize = '12px';
+        footer.textContent = '本试卷由交我通智能学习平台自动生成';
+        pdfContainer.appendChild(footer);
+        
+        // 使用html2pdf.js生成PDF
+        const opt = {
+            margin: 15,
+            filename: `${title}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(pdfContainer).save().then(() => {
+            alert('模拟卷已下载为PDF文件');
+        }).catch(err => {
+            console.error('PDF生成失败:', err);
+            alert('PDF生成失败，请重试');
+        });
+    }
+    
+    // 初始化应用
+    init();
+    
+    // 监听输入变化，更新预期结果
+    targetScore.addEventListener('input', updateExpectedResult);
+    questionCount.addEventListener('input', updateExpectedResult);
+    questionType.addEventListener('change', updateExpectedResult);
+</script>
+</body>
+</html>
